@@ -1,5 +1,7 @@
 package br.com.poc.batch.config;
 
+import br.com.poc.batch.listener.BatchLoggingListener;
+
 import br.com.poc.batch.domain.Produto;
 import br.com.poc.batch.processor.ProdutoProcessor;
 import org.springframework.batch.core.Step;
@@ -17,12 +19,13 @@ public class StepConfig {
     public Step reajusteProdutoStep(JobRepository jobRepository,
             PlatformTransactionManager transactionManager,
             FlatFileItemReader<Produto> produtoReader, ProdutoProcessor processor,
-            FlatFileItemWriter<Produto> produtoWriter) {
+            FlatFileItemWriter<Produto> produtoWriter, BatchLoggingListener loggingListener) {
         return new StepBuilder("reajusteProdutoStep", jobRepository)
                 .<Produto, Produto>chunk(2, transactionManager)
                 .reader(produtoReader)
                 .processor(processor)
                 .writer(produtoWriter)
+                .listener(loggingListener)
                 .build();
     }
 }

@@ -118,3 +118,17 @@ FROM BATCH_JOB_EXECUTION_PARAMS;
 SELECT JOB_EXECUTION_ID, STEP_NAME, STATUS, READ_COUNT, WRITE_COUNT,
        COMMIT_COUNT, ROLLBACK_COUNT FROM BATCH_STEP_EXECUTION;
 ```
+
+## Passo 12 — observabilidade mínima
+
+`BatchLoggingListener` registra início e fim de Job e Step, IDs de execução,
+status, quantidade lida/escrita e duração em milissegundos. Não há log por item.
+Exemplo observado em `caso=observabilidade` (JobExecution 4):
+
+```text
+Fim Step=reajusteProdutoStep executionId=4 status=COMPLETED lidos=3 escritos=3 tempoMs=42
+Fim Job=reajusteProdutoJob executionId=4 status=COMPLETED lidos=3 escritos=3 tempoMs=71
+```
+
+As contagens do Job são a soma dos Steps executados nessa tentativa; os tempos
+variam a cada execução. Os metadados continuam sendo a fonte para o histórico.
