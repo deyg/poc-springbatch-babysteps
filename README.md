@@ -1,4 +1,4 @@
-# Spring Batch POC
+# poc-springbatch-babysteps
 
 Java 21, Maven, Spring Boot 3.5.7, Spring Batch e H2.
 
