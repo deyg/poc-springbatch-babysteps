@@ -132,3 +132,79 @@ Fim Job=reajusteProdutoJob executionId=4 status=COMPLETED lidos=3 escritos=3 tem
 
 As contagens do Job são a soma dos Steps executados nessa tentativa; os tempos
 variam a cada execução. Os metadados continuam sendo a fonte para o histórico.
+
+## Passo 13 — teste de integração
+
+`ProdutoJobIntegrationTest` carrega a aplicação, dispara o Job via JobLauncher
+com o parâmetro identificador `caso=integracao` e verifica:
+
+- BatchStatus.COMPLETED;
+- 3 leituras, 3 escritas, 2 commits e 0 rollbacks;
+- as três linhas exatas do CSV final.
+
+O teste usa Reader, Processor e Writer reais. H2 em memória e diretório
+`@TempDir` isolam seus artefatos do histórico e do arquivo da execução manual.
+O disparo automático do Boot é desabilitado apenas no teste. Os listeners de
+teste ficam limitados à injeção de dependências: não há mocks nem necessidade
+de anexar agente Mockito, operação indisponível neste ambiente.
+
+Validação final: `mvn clean test`, 4 testes, 0 falhas e 0 erros.
+
+## Conceitos e evolução
+
+```text
+              Job
+               │
+               ▼
+              Step
+               │
+        chunk transaction
+               │
+    ┌──────────┼───────────┐
+    ▼          ▼           ▼
+ Reader    Processor     Writer
+    │          │           │
+    ▼          ▼           ▼
+  CSV       Regra        CSV
+```
+
+O Job organiza o fluxo. O Step lê até dois produtos por chunk, transforma cada
+produto e entrega o grupo ao Writer. O transactionManager delimita commit ou
+rollback. O JobRepository registra JobInstance, JobExecution e StepExecution,
+além dos contextos que permitem restart. Falha e restart estão demonstrados
+nos passos 10 e 11; o teste de integração comprova o fluxo completo.
+
+| Passo | Arquivos principais | Validação realizada |
+| --- | --- | --- |
+| 1 | pom.xml, BatchApplication, application.properties | clean test e aplicação |
+| 2 | Produto, produtos.csv | compilação e CSV no classpath |
+| 3 | ReaderConfig, ReaderConfigTest | 1 teste |
+| 4 | ProdutoProcessor, ProdutoProcessorTest | 3 testes |
+| 5 | WriterConfig | compilação e 3 testes |
+| 6 | StepConfig | compilação e 3 testes |
+| 7 | JobConfig | 3 testes e aplicação |
+| 8 | application.properties, .gitignore, README | 3 testes, aplicação, CSV e SQL |
+| 9 | README | 3 testes e consultas SQL |
+| 10 | ProdutoProcessor, README | 3 testes e execução FAILED esperada |
+| 11 | ProdutoProcessor, README | 3 testes, restart, CSV e SQL |
+| 12 | BatchLoggingListener, JobConfig, StepConfig, README | 3 testes e logs reais |
+| 13 | ProdutoJobIntegrationTest, README | clean test, 4 testes |
+
+Cada passo possui seu próprio commit. A falha proposital existe apenas no
+commit do passo 10; o código final está corrigido.
+
+### Ferramentas neste workspace
+
+Maven e JDK completo foram instalados em `/tmp`, pois o ambiente inicialmente
+continha apenas o runtime Java. Para reutilizar as ferramentas e o cache locais:
+
+```sh
+export JAVA_HOME=/tmp/jdk21
+export PATH=/tmp/apache-maven-3.9.11/bin:$JAVA_HOME/bin:$PATH
+mvn -o -Dmaven.repo.local=/tmp/maven-repository clean test
+mvn -o -Dmaven.repo.local=/tmp/maven-repository spring-boot:run \
+  -Dspring-boot.run.arguments=caso=nova-execucao-02
+```
+
+O modo offline usa as dependências já baixadas. Fora deste ambiente, basta ter
+JDK 21 e Maven disponíveis e executar os comandos convencionais no início do README.
