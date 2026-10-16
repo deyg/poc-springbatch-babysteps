@@ -208,3 +208,56 @@ mvn -o -Dmaven.repo.local=/tmp/maven-repository spring-boot:run \
 
 O modo offline usa as dependências já baixadas. Fora deste ambiente, basta ter
 JDK 21 e Maven disponíveis e executar os comandos convencionais no início do README.
+
+
+
+## Ordem Completa Observada
+![alt text](image.png)
+
+
+## Log Organizado da Aplicacao
+
+| Data e hora | Evento |
+|---|---|
+| 16/10/2026 19:14:40.393 | Aplicação iniciando com Java 21.0.12.1, PID `3368`. |
+| 16/10/2026 19:14:40.393 | Spring Boot `3.5.7` e Spring `6.2.12`. |
+| 16/10/2026 19:14:40.393 | Nenhum perfil ativo; usando o perfil `default`. |
+| 16/10/2026 19:14:40.818 | Iniciando pool de conexões `HikariPool-1`. |
+| 16/10/2026 19:14:40.987 | Conexão criada com o banco H2 `jdbc:h2:file:./data/batch`, usuário `SA`. |
+| 16/10/2026 19:14:40.988 | Pool de conexões iniciado. |
+| 16/10/2026 19:14:41.152 | Aplicação iniciada em `1,012 s`. |
+| 16/10/2026 19:14:41.154 | Execução iniciada sem argumentos. |
+| 16/10/2026 19:14:41.177 | Job `reajusteProdutoJob` disparado sem parâmetros. |
+| 16/10/2026 19:14:41.190 | `[JOB][INÍCIO]` Execução `1` iniciada. |
+| 16/10/2026 19:14:41.196 | Step `reajusteProdutoStep` acionado. |
+| 16/10/2026 19:14:41.200 | `[STEP][INÍCIO]` Step da execução `1` iniciado. |
+| 16/10/2026 19:14:41.207 | `[CHUNK][INÍCIO]` Chunk `1` iniciado. |
+| 16/10/2026 19:14:41.207 | `[READER]` Aguardando primeiro item. |
+| 16/10/2026 19:14:41.225 | `[READER][ITEM LIDO]` Produto `1`: Teclado, preço `100,00`. |
+| 16/10/2026 19:14:41.226 | `[READER]` Aguardando segundo item. |
+| 16/10/2026 19:14:41.227 | `[READER][ITEM LIDO]` Produto `2`: Mouse, preço `50,00`. |
+| 16/10/2026 19:14:41.227 | `[PROCESSOR][INÍCIO]` Processando produto `1`. |
+| 16/10/2026 19:14:41.227 | `[PROCESSOR][CÁLCULO]` Teclado reajustado em `10%`: `100,00 → 110,00`. |
+| 16/10/2026 19:14:41.228 | `[PROCESSOR][INÍCIO]` Processando produto `2`. |
+| 16/10/2026 19:14:41.228 | `[PROCESSOR][CÁLCULO]` Mouse reajustado em `10%`: `50,00 → 55,00`. |
+| 16/10/2026 19:14:41.228 | `[WRITER][INÍCIO]` Preparando escrita de `2` itens. |
+| 16/10/2026 19:14:41.228 | `[WRITER][ITEM ESCRITO]` Teclado gravado com preço `110,00`. |
+| 16/10/2026 19:14:41.229 | `[WRITER][ITEM ESCRITO]` Mouse gravado com preço `55,00`. |
+| 16/10/2026 19:14:41.229 | `[WRITER][FIM]` Escrita dos `2` itens concluída. |
+| 16/10/2026 19:14:41.230 | `[CHUNK][COMMIT]` Chunk `1` confirmado: 2 lidos, 2 escritos e 1 commit. |
+| 16/10/2026 19:14:41.230 | `[CHUNK][INÍCIO]` Chunk `2` iniciado. |
+| 16/10/2026 19:14:41.231 | `[READER]` Aguardando próximo item. |
+| 16/10/2026 19:14:41.231 | `[READER][ITEM LIDO]` Produto `3`: Monitor, preço `1.000,00`. |
+| 16/10/2026 19:14:41.231 | `[READER]` Tentativa de leitura seguinte para detectar o fim do arquivo. |
+| 16/10/2026 19:14:41.231 | `[PROCESSOR][INÍCIO]` Processando produto `3`. |
+| 16/10/2026 19:14:41.231 | `[PROCESSOR][CÁLCULO]` Monitor reajustado em `10%`: `1.000,00 → 1.100,00`. |
+| 16/10/2026 19:14:41.231 | `[WRITER][INÍCIO]` Preparando escrita de `1` item. |
+| 16/10/2026 19:14:41.231 | `[WRITER][ITEM ESCRITO]` Monitor gravado com preço `1.100,00`. |
+| 16/10/2026 19:14:41.232 | `[WRITER][FIM]` Escrita do item concluída. |
+| 16/10/2026 19:14:41.233 | `[CHUNK][COMMIT]` Chunk `2` confirmado: 3 lidos, 3 escritos e 2 commits acumulados. |
+| 16/10/2026 19:14:41.234 | Step executado em `37 ms`. |
+| 16/10/2026 19:14:41.235 | `[STEP][RESUMO]` Status `COMPLETED`: 3 lidos, 3 escritos, 2 commits, nenhum filtro, skip ou rollback. |
+| 16/10/2026 19:14:41.239 | `[JOB][RESUMO]` Status `COMPLETED`: 3 lidos, 3 escritos, duração de `55 ms`. |
+| 16/10/2026 19:14:41.241 | Conclusão do job confirmada pelo Spring Batch. |
+| 16/10/2026 19:14:41.248 | Encerramento do pool de conexões iniciado. |
+| 16/10/2026 19:14:41.309 | Pool de conexões encerrado. |
