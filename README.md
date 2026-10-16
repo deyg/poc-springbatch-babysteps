@@ -59,3 +59,26 @@ java -cp ~/.m2/repository/com/h2database/h2/2.3.232/h2-2.3.232.jar \
 ```
 
 Use esse cliente com a aplicação encerrada para evitar disputa pelo arquivo H2.
+
+## Passo 10 — falha proposital
+
+O commit deste passo lança `RuntimeException("Erro proposital ao processar Mouse")`
+no Processor. Comando utilizado:
+
+```sh
+mvn spring-boot:run -Dspring-boot.run.arguments=caso=restart-demo
+```
+
+| JobInstance | JobExecution | STATUS | READ_COUNT | WRITE_COUNT | COMMIT_COUNT | ROLLBACK_COUNT |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2 | 2 | FAILED | 2 | 0 | 0 | 1 |
+
+Teclado e Mouse foram lidos no mesmo chunk de tamanho 2. O Processor falhou
+antes de o Writer receber o chunk; nenhum item foi escrito e a transação sofreu
+rollback. O arquivo ficou vazio. READ_COUNT=2 registra as leituras observadas
+na tentativa, não dois itens confirmados. O código de saída do Maven foi zero:
+`BUILD SUCCESS` sozinho não comprova sucesso do Job; consulte seu STATUS.
+
+O Writer de arquivo participa por buffering e estado de restart; um arquivo
+não oferece a mesma atomicidade física de uma tabela transacional em todos os
+cenários de queda. Aqui a falha aconteceu antes da escrita do primeiro chunk.
