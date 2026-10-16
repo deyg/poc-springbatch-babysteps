@@ -1,5 +1,18 @@
 # poc-springbatch-babysteps
 
+## Item 0 — Declaração de objetivo
+
+Esta aplicação tem como objetivo demonstrar, de forma incremental, didática e
+observável, o processamento em lote de produtos com Spring Batch. O sistema lê
+produtos de um arquivo CSV, aplica um reajuste de 10% ao preço de cada item e
+grava o resultado em um novo arquivo CSV, mantendo no banco H2 os metadados
+necessários para acompanhar execuções, commits, falhas e reinícios.
+
+O processamento é considerado bem-sucedido quando todos os produtos válidos da
+entrada são lidos, transformados e gravados uma única vez na saída, o Job e seu
+Step terminam com status `COMPLETED` e os contadores registrados pelo Spring
+Batch correspondem aos itens efetivamente processados.
+
 Java 21, Maven, Spring Boot 3.5.7, Spring Batch e H2.
 
 ```sh
@@ -37,14 +50,33 @@ Consultas executadas com a aplicação encerrada, abrindo o mesmo H2 local:
 
 ```sql
 SELECT * FROM BATCH_JOB_INSTANCE;
+```
+
+| JOB_INSTANCE_ID | VERSION | JOB_NAME | JOB_KEY |
+| ---: | ---: | --- | --- |
+| 1 | 0 | `reajusteProdutoJob` | `d41d8cd98f00b204e9800998ecf8427e` |
+
+```sql
 SELECT * FROM BATCH_JOB_EXECUTION;
+```
+
+| JOB_EXECUTION_ID | VERSION | JOB_INSTANCE_ID | CREATE_TIME | START_TIME | END_TIME | STATUS | EXIT_CODE | EXIT_MESSAGE | LAST_UPDATED |
+| ---: | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 2 | 1 | `2026-10-16 19:14:41.171` | `2026-10-16 19:14:41.183` | `2026-10-16 19:14:41.238` | `COMPLETED` | `COMPLETED` | — | `2026-10-16 19:14:41.240` |
+| 2 | 2 | 1 | `2026-10-16 19:39:06.116` | `2026-10-16 19:39:06.128` | `2026-10-16 19:39:06.150` | `COMPLETED` | `NOOP` | Todos os steps já estavam concluídos | `2026-10-16 19:39:06.152` |
+
+```sql
 SELECT STEP_NAME, STATUS, READ_COUNT, WRITE_COUNT, COMMIT_COUNT, ROLLBACK_COUNT
 FROM BATCH_STEP_EXECUTION;
 ```
 
-Resultado inicial: JobInstance 1 (`reajusteProdutoJob`), JobExecution 1
-(`COMPLETED`) e StepExecution 1 (`reajusteProdutoStep`, 3 lidos, 3 escritos,
-2 commits, 0 rollbacks).
+| STEP_NAME | STATUS | READ_COUNT | WRITE_COUNT | COMMIT_COUNT | ROLLBACK_COUNT |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `reajusteProdutoStep` | `COMPLETED` | 3 | 3 | 2 | 0 |
+
+A primeira execução processou os três produtos. A segunda pertence à mesma
+JobInstance e terminou com `EXIT_CODE=NOOP`, pois o Step já estava concluído e
+nenhum parâmetro identificador diferente foi informado.
 
 `JobInstance → JobExecution → StepExecution`: a instância identifica o Job
 pelo nome e pelos parâmetros identificadores; uma execução registra uma tentativa;
