@@ -82,3 +82,39 @@ na tentativa, não dois itens confirmados. O código de saída do Maven foi zero
 O Writer de arquivo participa por buffering e estado de restart; um arquivo
 não oferece a mesma atomicidade física de uma tabela transacional em todos os
 cenários de queda. Aqui a falha aconteceu antes da escrita do primeiro chunk.
+
+## Passo 11 — restart
+
+Removida a falha, executei exatamente o mesmo comando e parâmetro do passo 10.
+Não apaguei tabelas, banco, contextos nem o arquivo vazio.
+
+| JobInstance | JobExecution | STATUS | READ_COUNT | WRITE_COUNT | COMMIT_COUNT | ROLLBACK_COUNT |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2 | 2 | FAILED | 2 | 0 | 0 | 1 |
+| 2 | 3 | COMPLETED | 3 | 3 | 2 | 0 |
+
+As execuções 2 e 3 têm `caso=restart-demo`, `IDENTIFYING=Y`, e apontam à mesma
+JobInstance 2: isso é restart. Cada tentativa tem seu próprio JobExecution e
+StepExecution; o histórico FAILED é preservado. Como nenhum chunk tinha sido
+confirmado, o restart leu os três registros desde o início. O CSV final foi
+validado novamente, sem duplicatas.
+
+Mudar um parâmetro identificador cria outra JobInstance, não um restart.
+Repetir uma instância já COMPLETED é rejeitado. Para uma nova execução manual:
+
+```sh
+mvn spring-boot:run -Dspring-boot.run.arguments=caso=nova-execucao-01
+```
+
+Use outro valor a cada nova instância desejada. Evite timestamps automáticos
+quando quiser demonstrar restart: eles mudariam a identidade.
+
+Consulta antes e depois:
+
+```sql
+SELECT JOB_EXECUTION_ID, JOB_INSTANCE_ID, STATUS FROM BATCH_JOB_EXECUTION;
+SELECT JOB_EXECUTION_ID, PARAMETER_NAME, PARAMETER_VALUE, IDENTIFYING
+FROM BATCH_JOB_EXECUTION_PARAMS;
+SELECT JOB_EXECUTION_ID, STEP_NAME, STATUS, READ_COUNT, WRITE_COUNT,
+       COMMIT_COUNT, ROLLBACK_COUNT FROM BATCH_STEP_EXECUTION;
+```

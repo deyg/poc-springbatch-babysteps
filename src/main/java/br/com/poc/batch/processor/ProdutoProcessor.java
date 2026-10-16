@@ -10,9 +10,6 @@ import org.springframework.stereotype.Component;
 public class ProdutoProcessor implements ItemProcessor<Produto, Produto> {
     @Override
     public Produto process(Produto produto) {
-        if ("Mouse".equals(produto.nome())) {
-            throw new RuntimeException("Erro proposital ao processar Mouse");
-        }
         var novoPreco = produto.preco().multiply(new BigDecimal("1.10"))
                 .setScale(2, RoundingMode.HALF_UP);
         return new Produto(produto.id(), produto.nome(), novoPreco);
